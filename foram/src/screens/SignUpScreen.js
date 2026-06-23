@@ -5,56 +5,56 @@ import {
 } from 'react-native';
 import { COLORS, RADIUS, SHADOW } from '../theme';
 
-// Importamos nuestra función personalizada que conecta con AsyncStorage
 import { saveLocalData } from '../utils/storage'; 
+// IMPORTAMOS FIREBASE (Asegúrate de que los puntos de la ruta lleguen al archivo firebase.js suelto)
+import { db } from '../../firebase';
+import { collection, addDoc } from 'firebase/firestore';
 
 export default function SignUpScreen({ navigation }) {
-  // Manejo de Estados (State): Aquí guardamos temporalmente lo que el usuario escribe.
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  
-  // ESTADO CLAVE PARA EL PROFE: Aquí definimos si el usuario es estudiante o dueño.
-  // Inicia por defecto en 'student'. Al tocar los botones, esto cambia dinámicamente.
   const [userRole, setUserRole] = useState('student'); 
 
-  // Función asíncrona que se ejecuta al presionar "Registrarse"
   const handleSignUp = async () => {
-    // 1. VALIDACIÓN BÁSICA: .trim() elimina los espacios en blanco. 
-    // Si algún campo está vacío, detenemos la función con un 'return' temprano.
     if (!name.trim() || !email.trim() || !password.trim()) {
       Alert.alert("Campos incompletos", "Por favor completa todos los datos.");
       return;
     }
 
-    // 2. ESCUDO PROTECTOR (Try/Catch): Si falla el guardado en la memoria del teléfono, 
-    // el 'catch' atrapa el error y muestra una alerta en vez de cerrar la aplicación de golpe.
     try {
-      // Armamos un objeto (JSON) con los datos capturados en la vista, incluyendo el ROL seleccionado.
       const userData = {
         name: name,
         email: email,
         role: userRole, 
-        createdAt: new Date().toISOString() // Guardamos la fecha exacta del registro
+        createdAt: new Date().toISOString()
       };
 
-      // 3. PERSISTENCIA: Enviamos nuestro objeto a la función que lo guarda en el teléfono.
+      // 1. Guardamos localmente para que funcione tu FeedScreen
       await saveLocalData('user_profile', userData);
       
-      // 4. NAVEGACIÓN: Si todo sale bien y se guardó la data, avanzamos a la siguiente pantalla.
+      // 2. GUARDAMOS EN FIREBASE PARA EL BACKEND REMOTO
+      await addDoc(collection(db, "usuarios"), {
+        nombre: name,
+        email: email,
+        rol: userRole,
+        password: password, 
+        fechaRegistro: new Date().toISOString()
+      });
+      
+      // 3. Avanzamos a la validación de identidad
       navigation.navigate('IdentityValidation');
 
     } catch (error) {
       console.error("Error al registrar:", error);
-      Alert.alert("Error", `Hubo un problema: ${error.message}`);
+      Alert.alert("Error", `Hubo un problema al conectar con la base de datos.`);
     }
   };
 
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" />
-      {/* Usamos ScrollView para que la pantalla sea deslizable cuando el teclado sube */}
       <ScrollView
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
@@ -69,9 +69,7 @@ export default function SignUpScreen({ navigation }) {
           <Text style={styles.subtitle}>Elige tu perfil para comenzar</Text>
         </View>
 
-        {/* SELECTOR DE ROL: Demostración visual de cambio de estado */}
         <View style={styles.roleSelector}>
-          {/* Si userRole es 'student', le agregamos el estilo 'roleCardActive' para pintarlo morado */}
           <TouchableOpacity 
             style={[styles.roleCard, userRole === 'student' && styles.roleCardActive]}
             onPress={() => setUserRole('student')}
@@ -101,11 +99,9 @@ export default function SignUpScreen({ navigation }) {
             onChangeText={setName}
             icon="👤"
           />
-          {/* RENDERIZADO DINÁMICO: Operador ternario.
-              Si es estudiante dice "Correo Universitario", si no, dice "Correo Electrónico". */}
           <InputField
             label={userRole === 'student' ? "Correo Universitario" : "Correo Electrónico"}
-            placeholder={userRole === 'student' ? "tu.nombre@universidad.cl" : "correo@ejemplo.com"}
+            placeholder={userRole === 'student' ? "tu.nombre@usm.cl" : "correo@ejemplo.com"}
             value={email}
             onChangeText={setEmail}
             keyboardType="email-address"
@@ -129,7 +125,7 @@ export default function SignUpScreen({ navigation }) {
 
         <TouchableOpacity
           style={styles.primaryBtn}
-          onPress={handleSignUp} // Conectamos el botón con nuestra función asíncrona
+          onPress={handleSignUp}
           activeOpacity={0.85}
         >
           <Text style={styles.primaryBtnText}>Registrarse →</Text>
@@ -149,8 +145,6 @@ export default function SignUpScreen({ navigation }) {
   );
 }
 
-// COMPONENTE REUTILIZABLE: Creamos esta función pequeña (InputField) para no repetir 
-// el mismo código de diseño tres veces en el formulario principal.
 function InputField({ label, placeholder, value, onChangeText, secureTextEntry, keyboardType, autoCapitalize, icon, rightAction }) {
   return (
     <View style={inputStyles.wrapper}>
@@ -162,8 +156,8 @@ function InputField({ label, placeholder, value, onChangeText, secureTextEntry, 
           placeholder={placeholder}
           placeholderTextColor={COLORS.gray400}
           value={value}
-          onChangeText={onChangeText} // Conecta lo escrito con el estado (ej: setName)
-          secureTextEntry={secureTextEntry} // Oculta los caracteres de la contraseña
+          onChangeText={onChangeText}
+          secureTextEntry={secureTextEntry}
           keyboardType={keyboardType || 'default'}
           autoCapitalize={autoCapitalize || 'words'}
         />
@@ -173,7 +167,6 @@ function InputField({ label, placeholder, value, onChangeText, secureTextEntry, 
   );
 }
 
-// Estilos de los inputs
 const inputStyles = StyleSheet.create({
   wrapper: { marginBottom: 16 },
   label: { fontSize: 13, fontFamily: 'Poppins-Bold', color: COLORS.dark, marginBottom: 8, marginLeft: 4 },
@@ -182,7 +175,6 @@ const inputStyles = StyleSheet.create({
   input: { flex: 1, fontSize: 15, color: COLORS.dark },
 });
 
-// Estilos generales
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background, paddingTop: Platform.OS === 'android' ? 40 : 0 },
   scroll: { paddingHorizontal: 24, paddingTop: 16, paddingBottom: 40 },
@@ -191,7 +183,6 @@ const styles = StyleSheet.create({
   headerArea: { marginBottom: 24 },
   title: { fontSize: 34, fontFamily: 'Poppins-ExtraBold', color: COLORS.dark, lineHeight: 42, marginBottom: 6 },
   subtitle: { fontSize: 15, color: COLORS.gray600, lineHeight: 22, fontFamily: 'OpenSans-Regular' },
-  
   roleSelector: { flexDirection: 'row', gap: 12, marginBottom: 28 },
   roleCard: { flex: 1, backgroundColor: COLORS.gray100, padding: 16, borderRadius: RADIUS.lg, borderWidth: 2, borderColor: 'transparent', alignItems: 'center' },
   roleCardActive: { backgroundColor: COLORS.purpleLight, borderColor: COLORS.purple, ...SHADOW.soft },
@@ -200,7 +191,6 @@ const styles = StyleSheet.create({
   roleTitleActive: { color: COLORS.purpleDark },
   roleDesc: { fontSize: 11, fontFamily: 'OpenSans-Regular', color: COLORS.gray400, textAlign: 'center' },
   roleDescActive: { color: COLORS.purple },
-
   form: { marginBottom: 20 },
   showHide: { color: COLORS.purple, fontSize: 13, fontFamily: 'Poppins-Bold' },
   primaryBtn: { backgroundColor: COLORS.dark, paddingVertical: 18, borderRadius: RADIUS.lg, alignItems: 'center', marginBottom: 16 },

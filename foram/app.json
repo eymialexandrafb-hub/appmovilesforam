@@ -1,5 +1,8 @@
 {
-  "plugins": [
-    "expo-font"
-  ]
+  "expo": {
+    "name": "foram",
+    "slug": "foram",
+    "version": "1.0.0",
+    "sdkVersion": "54.0.0"
+  }
 }

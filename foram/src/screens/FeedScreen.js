@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity,
@@ -156,7 +157,7 @@ export default function FeedScreen({ navigation }) {
 
                 {/* Función map() que itera sobre el arreglo PROPERTIES para renderizar las tarjetas automáticamente */}
                 {PROPERTIES.map((prop) => (
-                  <TouchableOpacity key={prop.id} style={styles.propertyCard} activeOpacity={0.9}>
+                  <TouchableOpacity key={prop.id} style={styles.propertyCard} activeOpacity={0.9} onPress={() => navigation.navigate('PropertyDetail', { property: prop })}>
                     <View style={[styles.propertyImage, { backgroundColor: prop.color }]}>
                       <Text style={styles.propertyEmoji}>{prop.emoji}</Text>
                       {prop.verified && <View style={styles.verifiedBadge}><Text style={styles.verifiedText}>✅ Verificado</Text></View>}

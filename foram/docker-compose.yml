@@ -1,0 +1,10 @@
+services:
+  foram-app:
+    build: .
+    ports:
+      - "8081:8081"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - EXPO_DEV_CLIENT_HOST=localhost

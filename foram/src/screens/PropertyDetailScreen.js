@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity,
   SafeAreaView, ScrollView, Alert,
@@ -65,9 +65,26 @@ export default function PropertyDetailScreen({ route, navigation }) {
     rooms: 2, rating: 4.7, reviews: 12,
   };
 
-  const [saved, setSaved] = useState(false);
+const [saved, setSaved] = useState(false);
 
-  const handleContact = () => {
+
+  useEffect(() => {
+    const checkSaved = async () => {
+      const data = await getLocalData('favoritos'); 
+      if (data && data.includes(property.id)) {
+        setSaved(true);
+      }
+    };
+    checkSaved();
+  }, []);
+
+  const toggleSave = async () => {
+    const newValue = !saved;
+    setSaved(newValue);
+    
+    console.log(newValue ? "Agregado a favoritos" : "Quitado de favoritos");
+  };
+const handleContact = () => {
     Alert.alert(
       '🏠 Contactar Arrendador',
       '¿Deseas enviar una solicitud de contacto al arrendador?',
@@ -91,7 +108,7 @@ export default function PropertyDetailScreen({ route, navigation }) {
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.saveCircle}
-          onPress={() => setSaved(!saved)}
+          onPress={toggleSave}
         >
           <Text style={styles.saveIcon}>{saved ? '❤️' : '🤍'}</Text>
         </TouchableOpacity>
