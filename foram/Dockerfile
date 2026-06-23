@@ -15,4 +15,4 @@ COPY . .
 
 EXPOSE 8081
 
-CMD ["npx", "expo", "start", "--tunnel"]
+CMD ["npx", "expo", "start", "--tunnel", "--non-interactive"]
